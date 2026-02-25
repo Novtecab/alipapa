@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kassan | EXOTIKMAT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: '#fd2601', 'brand-light': '#f37e1c' }, fontFamily: { anton: ['Anton', 'sans-serif'], inter: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <style>
+        ::selection {
+            background: white;
+            color: #fd2601;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(160deg, #fd2601 0%, #f37e1c 55%, #e8a020 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        input,
+        select,
+        textarea {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            outline: none;
+            transition: all .2s;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 400;
+        }
+
+        select option {
+            background: #b03010;
+            color: white;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 6px;
+            color: white;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fd2601;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+        }
+
+        .radio-card {
+            cursor: pointer;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .radio-card.selected {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .radio-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .zone-pill {
+            display: inline-block;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border: 1.5px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        /* ─── DELIVERY ZONES (Stockholm) ── */
+        const STOCKHOLM_ZONES = [
+            { id: 'z1', label: 'Zon 1 — Innerstad', desc: '0–5 km (Norrmalm, Södermalm, Östermalm, Kungsholmen)', baseFee: 0 },
+            { id: 'z2', label: 'Zon 2 — Söderort / Norrort', desc: '5–15 km (Hägersten, Bromma, Lidingö, Solna)', baseFee: 30 },
+            { id: 'z3', label: 'Zon 3 — Ytterstad', desc: '15–30 km (Nacka, Huddinge, Sollentuna, Järfälla)', baseFee: 60 },
+            { id: 'z4', label: 'Zon 4 — Storstockholm utanför', desc: '30–50 km (Södertälje, Märsta, Norrtälje)', baseFee: 100 },
+        ];
+
+        /* ─── STOCKHOLM DELIVERY MODES ── */
+        const STHLM_MODES = [
+            { id: 'standard4h', icon: '📦', label: 'Standardleverans', time: 'Idag inom 4 timmar', surcharge: 0, note: 'Estimerat fönster, ej garanterat pga trafik.' },
+            { id: 'slot2h', icon: '🕐', label: 'Tidsbestämd (2h-fönster)', time: 'Du väljer 2h-block', surcharge: 50, note: 'Vi försöker träffa fönstret men trafik kan påverka.' },
+            { id: 'express2h', icon: '⚡', label: 'Express 2 timmar', time: 'Inom 2 h från beställning', surcharge: 89, note: 'Expressrutt. Trafikförseningar kan förekomma.' },
+            { id: 'urgent30', icon: '🚨', label: 'Urgent 30 minuter', time: 'Inom ~30 min (limited)', surcharge: 149, note: 'Begränsad kapacitet. Ej tillgängligt alltid. Trafik kan ge ±15 min.' },
+            { id: 'instabox', icon: '📬', label: 'Paketbox (Instabox/DHL)', time: 'Levereras inom dagen', surcharge: 29, note: 'Kod skickas via SMS när paketet är klart.' },
+        ];
+
+        /* ─── POST MODES (national) ── */
+        const POST_MODES = [
+            { id: 'post_std', icon: '📮', label: 'Myrpaketet (2–4 dagar)', price: 49, note: 'PostNord standardfrakt. Spårbar. Upp till 10 kg.' },
+            { id: 'post_exp', icon: '🚀', label: 'Expresspaket (1–2 dagar)', price: 99, note: 'DHL Express. Spårbar med SMS-notis.' },
+            { id: 'post_home', icon: '🏠', label: 'Hemleverans Post', price: 129, note: 'Levereras till angiven adress, dörren. PostNord.' },
+        ];
+
+        /* ─── SWEDISH CITIES ── */
+        const CITIES = ['Stockholm', 'Göteborg', 'Malmö', 'Uppsala', 'Västerås', 'Örebro', 'Linköping', 'Helsingborg', 'Jönköping', 'Norrköping', 'Lund', 'Umeå', 'Gävle', 'Borås', 'Södertälje', 'Eskilstuna', 'Halmstad', 'Växjö', 'Karlstad', 'Sundsvall'];
+
+        /* ─── TIME SLOTS ── */
+        const TODAY_SLOTS = ['08:00–10:00', '10:00–12:00', '12:00–14:00', '14:00–16:00', '16:00–18:00', '18:00–20:00'];
+
+        /* ─── MOCK CART ── */
+        const MOCK_CART = [
+            { id: 1, name: 'Medjool Dadlar', weight: '500 g', price: 89, qty: 2, img: 'https://images.unsplash.com/photo-1558642084-fd07fae5282e?w=80&q=70' },
+            { id: 2, name: 'Kashmiri Chai', weight: '100 g', price: 79, qty: 1, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=80&q=70' },
+            { id: 19, name: 'Torkad Mango', weight: '250 g', price: 65, qty: 1, img: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=80&q=70' },
+        ];
+
+        const COUPON_CODES = { RAMADAN10: '10%', PASK10: '10%', EXOTIKMAT: '15%' };
+
+        /* ─── HELPERS ── */
+        function pct(str) { return parseInt(str) / 100; }
+        function getDeliveryCost(deliveryData) {
+            const { region, zone, sthlmMode, postMode } = deliveryData;
+            if (region === 'stockholm') {
+                const z = STOCKHOLM_ZONES.find(z => z.id === zone) || STOCKHOLM_ZONES[0];
+                const m = STHLM_MODES.find(m => m.id === sthlmMode) || STHLM_MODES[0];
+                return z.baseFee + m.surcharge;
+            }
+            const pm = POST_MODES.find(m => m.id === postMode) || POST_MODES[0];
+            return pm.price;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           SUB-COMPONENTS
+        ══════════════════════════════════════════════════════════════════ */
+        function StepBar({ step }) {
+            const STEPS = ['Leverans', 'Betalning', 'Bekräftelse'];
+            return (
+                <div className="flex items-center gap-2 mb-10">
+                    {STEPS.map((s, i) => (
+                        <React.Fragment key={s}>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border-2 transition-all ${i <= step ? 'bg-white text-brand border-white' : 'border-white/20 text-white/30'}`}>{i + 1}</div>
+                                <span className={`text-[12px] font-black tracking-widest uppercase ${i === step ? 'opacity-100' : 'opacity-30'}`}>{s}</span>
+                            </div>
+                            {i < STEPS.length - 1 && <div className="flex-1 h-0.5 mx-2" style={{ background: `rgba(255,255,255,${i < step ? 0.6 : 0.15})` }} />}
+                        </React.Fragment>
+                    ))}
+                </div>
+            );
+        }
+
+        /* ─── ORDER SUMMARY ── */
+        function OrderSummary({ cart, coupon, setCoupon, couponApplied, setCouponApplied, deliveryCost }) {
+            const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const discountRate = couponApplied ? pct(COUPON_CODES[coupon] || '0%') : 0;
+            const discountAmt = Math.round(subtotal * discountRate);
+            const total = subtotal + deliveryCost - discountAmt;
+            const freeAt = 599;
+            const remaining = freeAt - subtotal;
+            const tryApply = () => { if (COUPON_CODES[coupon]) setCouponApplied(true); };
+
+            return (
+                <div className="rounded-3xl p-6 flex flex-col gap-5 sticky top-24 shadow-2xl"
+                    style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                    <h3 className="font-anton text-2xl uppercase tracking-wider">Din beställning</h3>
+                    <div className="space-y-3.5 max-h-[40vh] overflow-y-auto pr-2">
+                        {cart.map(item => (
+                            <div key={item.id} className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative shadow-inner">
+                                    <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white text-brand rounded-full text-[10px] font-black flex items-center justify-center shadow-md">{item.qty}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold truncate text-white/90">{item.name}</p>
+                                    <p className="text-[10px] opacity-60 font-medium">{item.weight}</p>
+                                </div>
+                                <p className="text-sm font-black whitespace-nowrap">{item.price * item.qty} kr</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Coupon */}
+                    <div className="pt-2">
+                        <label>Rabattkod</label>
+                        <div className="flex gap-2">
+                            <input value={coupon} disabled={couponApplied} onChange={e => setCoupon(e.target.value.toUpperCase())} placeholder="T.ex. RAMADAN10" />
+                            <button onClick={tryApply} disabled={couponApplied} className="px-4 py-2 text-[11px] font-black tracking-widest uppercase rounded-xl border-2 border-white hover:bg-white hover:text-brand transition-all flex-shrink-0 disabled:opacity-40 shadow-sm">
+                                {couponApplied ? '✓' : 'OK'}
+                            </button>
+                        </div>
+                        {couponApplied && <p className="text-[11px] text-green-300 mt-2 font-bold flex items-center gap-1.5"><span className="text-sm">🎉</span> {COUPON_CODES[coupon]} rabatt aktiverad!</p>}
+                        {!couponApplied && coupon && !COUPON_CODES[coupon] && <p className="text-[11px] text-red-300 mt-2 font-bold">Ogiltig kod</p>}
+                    </div>
+
+                    {/* Totals */}
+                    <div className="space-y-2 pt-4 border-t border-white/10">
+                        {[['Delsumma', `${subtotal} kr`],
+                        ['Frakt', deliveryCost === 0 ? 'Gratis 🎉' : `${deliveryCost} kr`],
+                        ...(discountAmt ? [[`Rabatt (${COUPON_CODES[coupon] || 'KOD'})`, `-${discountAmt} kr`]] : [])].map(([l, v]) => (
+                            <div key={l} className="flex justify-between text-sm">
+                                <span className="opacity-60">{l}</span>
+                                <span className="font-bold">{v}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-between items-center pt-3 border-t border-white/10">
+                        <span className="font-black text-sm uppercase tracking-widest opacity-80">Totalt att betala</span>
+                        <span className="font-anton text-4xl">{total} kr</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                        {[['🔒', 'Säker bet.'], ['🚚', 'Snabb lev.'], ['↩️', '30 dg retur']].map(([ic, l]) => (
+                            <div key={l} className="text-center p-2.5 rounded-2xl bg-white/5 border border-white/5">
+                                <p className="text-xl mb-1">{ic}</p>
+                                <p className="text-[9px] opacity-60 font-black uppercase tracking-tighter leading-tight">{l}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        /* ─── DELIVERY STEP ── */
+        function DeliveryStep({ data, onChange }) {
+            const zone = STOCKHOLM_ZONES.find(z => z.id === data.zone) || STOCKHOLM_ZONES[0];
+            const sthlmMode = STHLM_MODES.find(m => m.id === data.sthlmMode) || STHLM_MODES[0];
+
+            return (
+                <div className="space-y-10">
+                    <h2 className="font-anton text-4xl uppercase tracking-wider">Mottagaruppgifter</h2>
+
+                    {/* Contact Form */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="md:col-span-2">
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-2">// Personlig information</p>
+                        </div>
+                        <div><label>Förnamn</label><input value={data.first || ''} onChange={e => onChange('first', e.target.value)} placeholder="T.ex. Ali" /></div>
+                        <div><label>Efternamn</label><input value={data.last || ''} onChange={e => onChange('last', e.target.value)} placeholder="T.ex. Malik" /></div>
+                        <div className="md:col-span-2"><label>E-postadress</label><input type="email" value={data.email || ''} onChange={e => onChange('email', e.target.value)} placeholder="T.ex. ali.malik@exempel.se" /></div>
+                        <div className="md:col-span-2"><label>Mobilnummer</label><input type="tel" value={data.phone || ''} onChange={e => onChange('phone', e.target.value)} placeholder="T.ex. 070 123 4567" /></div>
+                    </div>
+
+                    {/* Region Selector */}
+                    <div>
+                        <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-4">// Välj din stad / region</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {[{ id: 'stockholm', icon: '🏙️', label: 'Stockholm', sub: 'Expressleverans till dörren' },
+                            { id: 'post', icon: '📦', label: 'Hela Sverige', sub: 'Spårbar postleverans' }].map(r => (
+                                <label key={r.id} className={`radio-card ${data.region === r.id ? 'selected' : ''}`} onClick={() => onChange('region', r.id)}>
+                                    <input type="radio" name="region" value={r.id} checked={data.region === r.id} readOnly style={{ display: 'none' }} />
+                                    <span className="text-3xl mt-1">{r.icon}</span>
+                                    <div>
+                                        <p className="font-black text-base uppercase tracking-tight">{r.label}</p>
+                                        <p className="text-[11px] opacity-70 font-medium mt-1 leading-tight">{r.sub}</p>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── STOCKHOLM FLOW ── */}
+                    {data.region === 'stockholm' && (<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Zone Picking */}
+                        <div className="mb-8">
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-4">// Leveransavstånd från City</p>
+                            <div className="grid grid-cols-1 gap-3">
+                                {STOCKHOLM_ZONES.map(z => (
+                                    <label key={z.id} className={`radio-card ${data.zone === z.id ? 'selected' : ''}`} onClick={() => onChange('zone', z.id)}>
+                                        <input type="radio" name="zone" value={z.id} checked={data.zone === z.id} readOnly style={{ display: 'none' }} />
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <p className="font-black text-sm uppercase">{z.label}</p>
+                                                <span className="zone-pill">{z.baseFee === 0 ? 'Gratis' : '+' + z.baseFee + ' kr'}</span>
+                                            </div>
+                                            <p className="text-[11px] opacity-70 font-medium leading-relaxed">{z.desc}</p>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Address Fields */}
+                        <div className="mb-8 p-6 rounded-3xl bg-black/10 border border-white/5">
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-5">// Adressdetaljer</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2"><label>Gatuadress & Nummer</label><input value={data.street || ''} onChange={e => onChange('street', e.target.value)} placeholder="T.ex. Kungsgatan 12A" /></div>
+                                <div><label>Postnummer</label><input value={data.zip || ''} onChange={e => onChange('zip', e.target.value)} placeholder="111 22" /></div>
+                                <div><label>Stadsdel / Område</label><input value={data.district || ''} onChange={e => onChange('district', e.target.value)} placeholder="T.ex. Vasastan" /></div>
+                                <div className="col-span-2"><label>Portkod / Våning / Extra info</label><input value={data.doorcode || ''} onChange={e => onChange('doorcode', e.target.value)} placeholder="T.ex. Kod 1234, vån 3" /></div>
+                            </div>
+                        </div>
+
+                        {/* Stockholm Shipping Mode */}
+                        <div className="mb-8">
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-4">// Hur snabbt vill du ha det?</p>
+                            <div className="grid grid-cols-1 gap-3">
+                                {STHLM_MODES.map(m => (
+                                    <label key={m.id} className={`radio-card ${data.sthlmMode === m.id ? 'selected' : ''}`} onClick={() => onChange('sthlmMode', m.id)}>
+                                        <input type="radio" name="sthlmMode" value={m.id} checked={data.sthlmMode === m.id} readOnly style={{ display: 'none' }} />
+                                        <span className="text-3xl mt-1">{m.icon}</span>
+                                        <div className="flex-1">
+                                            <div className="flex items-start justify-between mb-1.5">
+                                                <div>
+                                                    <p className="font-black text-sm uppercase">{m.label}</p>
+                                                    <p className="text-[11px] font-bold text-white/90">{m.time}</p>
+                                                </div>
+                                                <span className="zone-pill">
+                                                    {m.surcharge === 0 ? 'BASPRIS' : `+${m.surcharge} kr`}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] opacity-60 italic font-medium">⚠️ {m.note}</p>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Special Handlers */}
+                        {data.sthlmMode === 'slot2h' && (
+                            <div className="mb-8 p-6 rounded-3xl bg-white/10 border border-white/10">
+                                <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/60 mb-4">// Välj ditt tidsfönster för idag</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {TODAY_SLOTS.map(slot => (
+                                        <button key={slot} onClick={() => onChange('timeSlot', slot)}
+                                            className="py-3 px-2 rounded-xl text-[12px] font-black tracking-tight border-2 transition-all"
+                                            style={data.timeSlot === slot ? { background: 'white', color: '#fd2601', borderColor: 'white' } : { borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
+                                            {slot}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {data.sthlmMode === 'instabox' && (
+                            <div className="mb-8 p-6 rounded-3xl bg-white/10 border border-white/10">
+                                <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/60 mb-4">// Välj utlämningsställe</p>
+                                <select value={data.boxLocation || ''} onChange={e => onChange('boxLocation', e.target.value)}>
+                                    <option value="">– Välj skåp / ombud –</option>
+                                    {['Instabox — Drottninggatan 71', 'Instabox — NK Stockholm', 'Instabox — Götgatan 22', 'DHL — 7-Eleven Vasagatan', 'PostNord — ICA Supermarket Söder'].map(b => (
+                                        <option key={b} value={b}>{b}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Traffic Disclaimer */}
+                        <div className="p-5 rounded-3xl bg-black/20 border border-white/5 flex items-start gap-4 shadow-xl">
+                            <div className="text-2xl mt-1">🚦</div>
+                            <div>
+                                <p className="text-[12px] font-bold text-white mb-1">Information om trafiksituationen</p>
+                                <p className="text-[11px] opacity-65 leading-relaxed font-medium">
+                                    Stockholm kan vara oförutsägbart. Alla våra tider är estimat. Vi gör allt vi kan för att hålla fönstret, men vid extrem trafik kan mindre förseningar uppstå. Du kan spåra budet via SMS-länken vi skickar vid avfärd.
+                                </p>
+                            </div>
+                        </div>
+                    </div>)}
+
+                    {/* ── POST FLOW ── */}
+                    {data.region === 'post' && (<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-6 rounded-3xl bg-black/10 border border-white/5 mb-8">
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-5">// Postleverans-adress</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2"><label>Adress</label><input value={data.street || ''} onChange={e => onChange('street', e.target.value)} placeholder="T.ex. Backvägen 5" /></div>
+                                <div><label>Postnummer</label><input value={data.zip || ''} onChange={e => onChange('zip', e.target.value)} placeholder="T.ex. 411 33" /></div>
+                                <div>
+                                    <label>Stad</label>
+                                    <select value={data.city || ''} onChange={e => onChange('city', e.target.value)}>
+                                        <option value="">– Välj din stad –</option>
+                                        {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <div className="col-span-2"><label>c/o eller Lägenhetsnummer (Valfritt)</label><input value={data.apt || ''} onChange={e => onChange('apt', e.target.value)} placeholder="T.ex. lgh 10, c/o Nilsson" /></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-4">// Välj fraktmetod</p>
+                            <div className="grid grid-cols-1 gap-3">
+                                {POST_MODES.map(m => (
+                                    <label key={m.id} className={`radio-card ${data.postMode === m.id ? 'selected' : ''}`} onClick={() => onChange('postMode', m.id)}>
+                                        <input type="radio" name="postMode" value={m.id} checked={data.postMode === m.id} readOnly style={{ display: 'none' }} />
+                                        <span className="text-3xl mt-1">{m.icon}</span>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="font-black text-sm uppercase tracking-tight">{m.label}</p>
+                                                <span className="zone-pill">{m.price} kr</span>
+                                            </div>
+                                            <p className="text-[11px] opacity-70 font-medium">{m.note}</p>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>)}
+                </div>
+            );
+        }
+
+        /* ─── PAYMENT STEP ── */
+        function PaymentStep({ data, onChange }) {
+            const METHODS = [
+                { id: 'card', label: 'Kortbetalning', sub: 'VISA, Mastercard, Amex', icon: '💳' },
+                { id: 'swish', label: 'Swish', sub: 'Betala direkt mobilt', icon: '📱' },
+                { id: 'apple-pay', label: 'Apple Pay', sub: 'Snabb & säker betalning', icon: '🍎' },
+                { id: 'google-pay', label: 'Google Pay', sub: 'För Android-enheter', icon: '🤖' },
+                { id: 'paypal', label: 'PayPal', sub: 'Via ditt PayPal-konto', icon: '🅿️' },
+                { id: 'klarna', label: 'Klarna', sub: 'Få först, betala senare', icon: '🟣' },
+                { id: 'invoice', label: 'Företagsfaktura', sub: '30 dagar (endast B2B)', icon: '🧾' },
+            ];
+
+            return (
+                <div className="space-y-10">
+                    <h2 className="font-anton text-4xl uppercase tracking-wider">Betalningsmetod</h2>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        {METHODS.map(opt => (
+                            <label key={opt.id} className={`radio-card ${data.method === opt.id ? 'selected' : ''}`} onClick={() => onChange('method', opt.id)}>
+                                <input type="radio" name="method" value={opt.id} checked={data.method === opt.id} readOnly style={{ display: 'none' }} />
+                                <span className="text-3xl mt-1">{opt.icon}</span>
+                                <div className="flex-1">
+                                    <p className="font-black text-sm uppercase tracking-tight">{opt.label}</p>
+                                    <p className="text-[11px] opacity-70 font-medium mt-0.5">{opt.sub}</p>
+                                </div>
+                                {data.method === opt.id && <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center animate-in zoom-in duration-300"><span className="text-[10px] text-brand">✓</span></div>}
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* Method Specific Details */}
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-400">
+                        {data.method === 'card' && (
+                            <div className="p-6 rounded-3xl bg-black/10 border border-white/10 space-y-5">
+                                <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-2">// Kortuppgifter</p>
+                                <div><label>Kortnummer</label><input value={data.cardNum || ''} onChange={e => { const raw = e.target.value.replace(/\D/g, '').slice(0, 16); onChange('cardNum', raw.replace(/(.{4})/g, '$1 ').trim()); }} placeholder="XXXX XXXX XXXX XXXX" /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label>Giltighet (MM/ÅÅ)</label><input value={data.expiry || ''} onChange={e => onChange('expiry', e.target.value)} placeholder="01/29" /></div>
+                                    <div><label>CVC / Säkerhetskod</label><input value={data.cvc || ''} onChange={e => onChange('cvc', e.target.value.slice(0, 3))} placeholder="XXX" type="password" /></div>
+                                </div>
+                                <div><label>Kortinnehavarens Namn</label><input value={data.cardName || ''} onChange={e => onChange('cardName', e.target.value)} placeholder="T.ex. Ali Malik" /></div>
+                            </div>
+                        )}
+
+                        {data.method === 'swish' && (
+                            <div className="p-6 rounded-3xl bg-black/10 border border-white/10 text-center">
+                                <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-5">// Swish-nummer</p>
+                                <div className="max-w-xs mx-auto"><input value={data.swishNum || ''} onChange={e => onChange('swishNum', e.target.value)} placeholder="07X XXX XX XX" className="text-center text-lg font-bold" /></div>
+                                <p className="text-[10px] opacity-60 mt-4 leading-relaxed font-medium">Vi skickar en betalningsförfrågan direkt till din Swish-app när du bekräftar ordern.</p>
+                            </div>
+                        )}
+
+                        {(['apple-pay', 'google-pay', 'paypal', 'klarna'].includes(data.method)) && (
+                            <div className="p-8 rounded-3xl bg-white/5 border border-white/5 text-center">
+                                <div className="text-4xl mb-4">🔗</div>
+                                <p className="text-sm font-bold text-white mb-2 uppercase tracking-wide">Extern Betalning</p>
+                                <p className="text-[12px] opacity-70 leading-relaxed font-medium px-4">
+                                    När du klickar på slutför kommer du att skickas vidare till <strong>{data.method.replace('-', ' ').toUpperCase()}</strong> för att säkert slutföra din transaktion.
+                                </p>
+                            </div>
+                        )}
+
+                        {data.method === 'invoice' && (
+                            <div className="p-6 rounded-3xl bg-black/10 border border-white/10 space-y-4">
+                                <p className="text-[11px] font-black tracking-[0.2em] uppercase text-white/40 mb-2">// Fakturering B2B</p>
+                                <div><label>Organisationsnummer</label><input value={data.orgNum || ''} onChange={e => onChange('orgNum', e.target.value)} placeholder="55XXXX-XXXX" /></div>
+                                <div><label>Faktura-referens / Märkning</label><input value={data.invoiceRef || ''} onChange={e => onChange('invoiceRef', e.target.value)} placeholder="T.ex. Projekt Ramadan" /></div>
+                                <p className="text-[10px] opacity-60 italic font-medium">Kreditupplysning sker automatiskt. Betalvillkor 30 dagar netto.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <label className="flex items-start gap-4 cursor-pointer p-4 rounded-2xl hover:bg-white/5 transition-colors group">
+                        <div className="relative flex items-center justify-center">
+                            <input type="checkbox" checked={data.terms || false} onChange={e => onChange('terms', e.target.checked)} className="w-5 h-5 rounded-md border-2 border-white/30 bg-transparent checked:bg-white cursor-pointer relative z-10 opacity-0" />
+                            <div className={`absolute inset-0 border-2 rounded-md transition-all ${data.terms ? 'bg-white border-white' : 'border-white/40 group-hover:border-white/60'}`}>
+                                {data.terms && <span className="text-brand text-[10px] font-black flex items-center justify-center h-full">✓</span>}
+                            </div>
+                        </div>
+                        <span className="opacity-90 leading-relaxed text-[12px] font-medium pt-0.5">
+                            Jag har läst och godkänner EXOTIKMAT's <a href="#" className="underline font-bold hover:text-white transition-colors">köpvillkor</a> samt hur mina <a href="#" className="underline font-bold hover:text-white transition-colors">personuppgifter behandlas</a>.
+                        </span>
+                    </label>
+                </div>
+            );
+        }
+
+        /* ─── CONFIRMATION STEP ── */
+        function ConfirmationStep({ delivery, cart, deliveryCost }) {
+            const orderNum = '#EXO-' + Math.floor(100000 + Math.random() * 900000);
+            const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + deliveryCost;
+            const isSthlm = delivery.region === 'stockholm';
+            const m = STHLM_MODES.find(m => m.id === delivery.sthlmMode) || STHLM_MODES[0];
+
+            return (
+                <div className="text-center py-5 animate-in zoom-in fade-in duration-700">
+                    <div className="text-8xl mb-8 filter drop-shadow-lg">✅</div>
+                    <h2 className="font-anton text-5xl md:text-6xl uppercase tracking-tighter mb-4 leading-none">ORDER SLUTFÖRD!</h2>
+                    <p className="text-base font-bold opacity-80 mb-2">Tack för att du väljer att rädda mat hos EXOTIKMAT, {delivery.first}!</p>
+                    <p className="text-sm opacity-60 mb-1">Referens: <span className="text-white font-black tracking-widest">{orderNum}</span></p>
+                    <p className="text-[12px] opacity-50 mb-10">En kvitto-kopia har skickats till <strong>{delivery.email}</strong>.</p>
+
+                    <div className="text-left rounded-3xl p-8 mb-10 shadow-2xl" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">🛒</div>
+                            <p className="font-black text-xs uppercase tracking-[.25em] opacity-40">Order-sammanställning</p>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            {cart.map(item => (
+                                <div key={item.id} className="flex items-center gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                                    <img src={item.img} className="w-12 h-12 rounded-xl object-cover shadow-md" alt={item.name} />
+                                    <div className="flex-1">
+                                        <p className="text-[13px] font-bold leading-tight">{item.name}</p>
+                                        <p className="text-[10px] opacity-60 font-medium">Antal: {item.qty} st</p>
+                                    </div>
+                                    <span className="text-sm font-black">{item.price * item.qty} kr</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-2 pt-6 border-t border-white/10">
+                            <div className="flex justify-between text-sm opacity-60 font-medium"><span>Fraktutgift</span><span>{deliveryCost} kr</span></div>
+                            <div className="flex justify-between text-lg font-black pt-2"><span>Totalbelopp</span><span>{total} kr</span></div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 text-left">
+                        {[
+                            { ic: '📦', t: 'Status:', v: 'Plockning pågår hos lager' },
+                            { ic: '🚚', t: 'Leverans:', v: isSthlm ? `${m.label} (${m.time})` : 'Postas inom 24h' },
+                            { ic: '📍', t: 'Adress:', v: `${delivery.street}, ${delivery.city || delivery.district}` },
+                            { ic: '📱', t: 'Notis:', v: `SMS till ${delivery.phone}` }
+                        ].map(s => (
+                            <div key={s.t} className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/5">
+                                <span className="text-3xl flex-shrink-0">{s.ic}</span>
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-0.5">{s.t}</p>
+                                    <p className="text-[13px] font-bold text-white/90 leading-tight">{s.v}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <a href="index.html" className="inline-block px-12 py-5 font-black text-sm tracking-widest uppercase rounded-full border-3 border-white hover:bg-white hover:text-brand transition-all duration-300 shadow-2xl active:scale-95">
+                        ← Tillbaka till butiken
+                    </a>
+                </div>
+            );
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           MAIN CHECKOUT APP
+        ══════════════════════════════════════════════════════════════════ */
+        function CheckoutApp() {
+            const [step, setStep] = useState(0);
+            const [cart] = useState(MOCK_CART);
+
+            // --- DEFAULT VISIBLE VALUES FOR USER ---
+            const [delivery, setDelivery] = useState({
+                region: 'stockholm',
+                zone: 'z1',
+                sthlmMode: 'standard4h',
+                postMode: 'post_std',
+                country: 'Sverige',
+                first: 'Ali',
+                last: 'Malik',
+                email: 'ali.malik@exotikmat.se',
+                phone: '070 123 4567',
+                street: 'Kungsgatan 1',
+                zip: '111 20',
+                city: 'Stockholm',
+                district: 'Norrmalm'
+            });
+
+            const [payment, setPayment] = useState({ method: 'card', terms: true });
+            const [coupon, setCoupon] = useState('');
+            const [couponApplied, setCouponApplied] = useState(false);
+
+            const updateD = (k, v) => setDelivery(p => ({ ...p, [k]: v }));
+            const updateP = (k, v) => setPayment(p => ({ ...p, [k]: v }));
+            const deliveryCost = getDeliveryCost(delivery);
+
+            const canNext = useCallback(() => {
+                if (step === 0) return !!(delivery.first && delivery.last && delivery.email && delivery.phone && delivery.street && (delivery.city || delivery.district));
+                if (step === 1) return !!(payment.method && payment.terms);
+                return true;
+            }, [step, delivery, payment]);
+
+            const nextStep = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setStep(s => s + 1);
+            };
+
+            return (
+                <div className="min-h-screen pb-20">
+                    {/* Top Aesthetic Navbar */}
+                    <div className="fixed top-0 w-full z-50 px-6 md:px-10 py-5 flex items-center justify-between"
+                        style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(30px)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <a href="index.html" className="text-xl font-black tracking-widest uppercase flex items-center gap-3">
+                            <span className="text-2xl">✱</span> EXOTIKMAT
+                        </a>
+                        <div className="text-[10px] font-black tracking-widest uppercase opacity-70 flex items-center gap-3 bg-white/10 px-4 py-2 rounded-full border border-white/10">
+                            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> SÄKER ANSLUTNING
+                        </div>
+                    </div>
+
+                    <div className="max-w-6xl mx-auto px-6 md:px-10 pt-32">
+                        <div className="grid md:grid-cols-12 gap-10 md:gap-16">
+
+                            {/* Main Content Area */}
+                            <div className="md:col-span-7">
+                                <StepBar step={step} />
+
+                                <div className="min-h-[600px]">
+                                    {step === 0 && <DeliveryStep data={delivery} onChange={updateD} />}
+                                    {step === 1 && <PaymentStep data={payment} onChange={updateP} />}
+                                    {step === 2 && <ConfirmationStep delivery={delivery} cart={cart} deliveryCost={deliveryCost} />}
+                                </div>
+
+                                {/* Persistent Navigation Buttons */}
+                                {step < 2 && (
+                                    <div className="flex flex-col sm:flex-row items-center justify-between mt-12 gap-6 pt-10 border-t border-white/10">
+                                        {step > 0
+                                            ? <button onClick={() => setStep(s => s - 1)} className="text-[12px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">← Tillbaka till Frakt</button>
+                                            : <a href="index.html" className="text-[12px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">← Fortsätt Handla</a>}
+
+                                        <button onClick={nextStep} disabled={!canNext()}
+                                            className="w-full sm:w-auto px-12 py-5 font-black text-[13px] tracking-[0.2em] uppercase rounded-full transition-all duration-500 shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+                                            style={canNext() ? { background: 'white', color: '#fd2601' } : { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }}>
+                                            {step === 0 ? 'Gå till Betalning' : 'Bekräfta Beställning'}
+                                            {canNext() && <span className="text-lg">→</span>}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sidebar Summary Area */}
+                            {step < 2 && (
+                                <div className="md:col-span-5">
+                                    <OrderSummary cart={cart} coupon={coupon} setCoupon={setCoupon} couponApplied={couponApplied} setCouponApplied={setCouponApplied} deliveryCost={deliveryCost} />
+
+                                    <div className="mt-8 p-6 rounded-3xl border border-white/10 bg-white/5 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">🛡️</span>
+                                            <p className="text-[11px] font-bold opacity-80 uppercase tracking-wider">Certifierad e-handel</p>
+                                        </div>
+                                        <p className="text-[11px] opacity-60 leading-relaxed font-medium">
+                                            Din trygghet är vår prioritet. Alla transaktioner hanteras med 256-bitars SSL-kryptering. Inga kortuppgifter sparas i våra egna system.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<CheckoutApp />);
+    </script>
+</body>
+
+</html>
