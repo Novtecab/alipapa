@@ -5,14 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EXOTIKMAT | Den Nya Matvaruepoken</title>
-    <!-- Fonts -->
+    <meta name="description"
+        content="Premium grossistmatvaror — äkta Desi-produkter direkt levererade. Köp ris, kryddor och linser i bulk till bästa pris.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;900&display=swap"
         rel="stylesheet">
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -22,61 +21,96 @@
             theme: {
                 extend: {
                     colors: {
-                        'brand-orange': '#fd2601',
+                        'brand': '#fd2601',
                         'brand-light': '#f37e1c',
-                        'blob-orange': '#F4791B',
+                        'blob': '#F4791B',
                     },
                     fontFamily: {
                         anton: ['Anton', 'sans-serif'],
                         inter: ['Inter', 'sans-serif'],
                     },
-                    opacity: {
-                        '8': '0.08',
-                    }
                 }
             }
         }
     </script>
 
-    <style type="text/css">
+    <style>
         ::selection {
             background-color: white;
             color: #fd2601;
         }
 
         body {
-            background: linear-gradient(to bottom, #fd2601, #f37e1c);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #fd2601 0%, #f37e1c 100%);
             color: white;
             min-height: 100vh;
             overflow-x: hidden;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .mask-brush {
-            -webkit-mask-image: url('https://raw.githubusercontent.com/Novtecab/alipapa/main/mask.png');
-            /* Fallback pattern if remote not available */
-            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><path d="M50,250 Q100,50 250,50 T450,250 T250,450 T50,250" fill="black"/></svg>');
-            /* Basic shape mask */
-            mask-size: cover;
-            -webkit-mask-size: cover;
-            mask-repeat: no-repeat;
-            -webkit-mask-repeat: no-repeat;
-        }
-
-        /* High-end Brush Stroke Mask Approximation with CSS Shapes if image fails */
-        .brush-shape {
-            clip-path: polygon(10% 0%, 90% 5%, 100% 50%, 90% 95%, 10% 100%, 0% 50%);
-            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
         }
 
         .text-massive {
-            font-size: clamp(3rem, 12vw, 180px);
-            line-height: 0.9;
-            letter-spacing: 0.05em;
+            font-size: clamp(2.5rem, 12vw, 180px);
+            line-height: 0.88;
+            letter-spacing: 0.04em;
         }
 
-        .tracking-widest-plus {
-            letter-spacing: 0.2em;
+        .brush-shape {
+            clip-path: ellipse(46% 50% at 50% 50%);
+            border-radius: 38% 62% 55% 45% / 48% 42% 58% 52%;
+        }
+
+        /* Cart Drawer */
+        .cart-drawer {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cart-drawer.open {
+            transform: translateX(0);
+        }
+
+        /* Animated gradient underline */
+        .hover-line {
+            position: relative;
+        }
+
+        .hover-line::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        .hover-line:hover::after {
+            width: 100%;
+        }
+
+        /* Card hover lift */
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fd2601;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -87,106 +121,427 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const App = () => {
-            const [scrolled, setScrolled] = useState(false);
+        /* ── DATA ── */
+        const products = [
+            { id: 1, name: 'Premium Basmati Ris', brand: 'Exotikmat', weight: '10 kg × 5 påsar', price: 849, unitPrice: '16.98 kr/kg', discount: '-30%', emoji: '🍚', category: 'Ris' },
+            { id: 2, name: 'Röd Chilipulver (fin)', brand: 'Desibox', weight: '5 kg bulkpack', price: 450, unitPrice: '90 kr/kg', discount: 'POPULÄR', emoji: '🌶️', category: 'Kryddor' },
+            { id: 3, name: 'Hel Gurkmeja', brand: 'PureDesi', weight: '5 kg bulkpack', price: 380, unitPrice: '76 kr/kg', discount: 'NYHET', emoji: '🟡', category: 'Kryddor' },
+            { id: 4, name: 'Röda Linser (Masoor Dal)', brand: 'Exotikmat', weight: '25 kg kommersiell', price: 520, unitPrice: '20.80 kr/kg', discount: '-45%', emoji: '🍲', category: 'Linser' },
+            { id: 5, name: 'Desi Ghee (Ren)', brand: 'GoldStaple', weight: '5 L × 2 burkar', price: 1290, unitPrice: '129 kr/L', discount: 'BULK', emoji: '🍯', category: 'Oljor' },
+            { id: 6, name: 'Färdiglagad Biryani Box', brand: 'Desibox', weight: '24 × 400 g box', price: 960, unitPrice: '40 kr/enhet', discount: 'STORSÄLJARE', emoji: '📦', category: 'Färdigrätter' },
+            { id: 7, name: 'Svart Senapsfrö', brand: 'PureDesi', weight: '3 kg bulkpack', price: 210, unitPrice: '70 kr/kg', discount: '-20%', emoji: '⚫', category: 'Kryddor' },
+            { id: 8, name: 'Garam Masala Blend', brand: 'Exotikmat', weight: '2 kg bulkpack', price: 340, unitPrice: '170 kr/kg', discount: 'PREMIUM', emoji: '🟤', category: 'Kryddor' },
+        ];
 
-            useEffect(() => {
-                const handleScroll = () => setScrolled(window.scrollY > 50);
-                window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
-            }, []);
+        const categories = ['Alla', 'Ris', 'Kryddor', 'Linser', 'Oljor', 'Färdigrätter'];
 
+        /* ── COMPONENTS ── */
+
+        function Navbar({ cartCount, onCartOpen, scrolled }) {
             return (
-                <div className="relative min-h-screen">
-                    {/* Ambient Background Elements */}
-                    <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden">
-                        <h1 className="text-[25vw] font-anton opacity-8 blur-[4px] select-none text-white pointer-events-none">
-                            EXOTIKMAT
-                        </h1>
+                <nav className={`fixed top-0 w-full z-50 flex items-center justify-between px-6 md:px-10 py-5 transition-all duration-300 ${scrolled ? 'bg-black/20 backdrop-blur-md' : ''}`}>
+                    <a href="#" className="text-xl md:text-2xl font-black tracking-widest uppercase leading-none select-none">✱ EXOTIKMAT</a>
 
-                        {/* Glowing Blobs */}
-                        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-blob-orange rounded-full blur-[80px] mix-blend-screen opacity-60 translate-x-1/2 translate-y-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-[600px] h-[300px] bg-blob-orange rounded-full blur-[80px] mix-blend-screen opacity-60 -translate-x-1/4 translate-y-1/2"></div>
+                    <div className="hidden md:flex gap-10 text-[11px] font-black tracking-[0.2em] uppercase">
+                        {['Kryddor', 'Ris', 'Linser', 'Grossist'].map(l => (
+                            <a key={l} href={`#${l.toLowerCase()}`} className="hover-line hover:opacity-70 transition-opacity">{l}</a>
+                        ))}
                     </div>
 
-                    {/* Navigation */}
-                    <nav className={`fixed top-0 w-full z-50 flex items-center justify-between px-8 py-6 transition-all duration-300 ${scrolled ? 'bg-black/10 backdrop-blur-md' : 'bg-transparent'}`}>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-black tracking-widest uppercase font-inter leading-none">✱ EXOTIKMAT</span>
-                        </div>
+                    <div className="flex items-center gap-4">
+                        {/* Cart */}
+                        <button onClick={onCartOpen} className="relative flex items-center gap-2 group">
+                            <span className="text-[11px] font-black tracking-widest uppercase hidden md:block">Varukorg</span>
+                            <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-brand transition-all duration-300 relative">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9M9 21a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2z" />
+                                </svg>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white text-brand rounded-full text-[10px] font-black flex items-center justify-center">{cartCount}</span>
+                                )}
+                            </div>
+                        </button>
 
-                        <div className="hidden md:flex gap-12 font-inter text-[10px] font-black tracking-[0.2em] uppercase">
-                            <a href="#" className="hover:opacity-60 transition-opacity">Kryddor</a>
-                            <a href="#" className="hover:opacity-60 transition-opacity">Ris</a>
-                            <a href="#" className="hover:opacity-60 transition-opacity">Linser</a>
-                            <a href="#" className="hover:opacity-60 transition-opacity">Grossist</a>
-                        </div>
-
-                        <div className="flex items-center gap-4 group cursor-pointer">
-                            <span className="text-[10px] font-black tracking-widest uppercase">BESTÄLL NU</span>
-                            <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-brand-orange transition-all duration-300">
+                        {/* CTA */}
+                        <div className="flex items-center gap-3 group cursor-pointer">
+                            <span className="text-[11px] font-black tracking-widest uppercase hidden md:block">BESTÄLL NU</span>
+                            <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-brand transition-all duration-300">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 19L19 5M19 5H10M19 5V14" />
                                 </svg>
                             </div>
                         </div>
-                    </nav>
+                    </div>
+                </nav>
+            );
+        }
 
-                    {/* Hero Section */}
-                    <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-20">
-                        <div className="relative w-full max-w-7xl">
-                            {/* Headline */}
-                            <div className="font-anton text-massive text-center uppercase tracking-widest leading-none pointer-events-none">
-                                <div className="md:block hidden">NY MATVARUEPOK</div>
-                                <div className="md:hidden flex flex-col items-center">
-                                    <span>NY</span>
-                                    <span>MATVARU</span>
-                                    <span>EPOK</span>
-                                </div>
-                            </div>
+        function Hero() {
+            return (
+                <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-16">
+                    {/* Ambient BG Text */}
+                    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
+                        <span className="font-anton text-[28vw] text-white select-none leading-none" style={{ opacity: 0.08, filter: 'blur(4px)' }}>EXOTIKMAT</span>
+                        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full" style={{ background: '#F4791B', filter: 'blur(80px)', mixBlendMode: 'screen', opacity: 0.6, transform: 'translate(50%,50%)' }} />
+                        <div className="absolute bottom-0 left-0 w-[600px] h-[300px] rounded-full" style={{ background: '#F4791B', filter: 'blur(80px)', mixBlendMode: 'screen', opacity: 0.6, transform: 'translate(-25%,50%)' }} />
+                    </div>
 
-                            {/* Masked Image Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                                <div className="w-[300px] h-[400px] md:w-[500px] md:h-[600px] relative pointer-events-none">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
-                                        alt="Matvaror"
-                                        className="w-full h-full object-cover brush-shape pointer-events-none grayscale contrast-125 brightness-110 shadow-2xl"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Floating Info Elements */}
-                            <div className="mt-12 md:mt-0 md:absolute md:bottom-[-100px] md:left-0 text-left max-w-sm">
-                                <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-relaxed opacity-90">
-                                    // Premium Grossistmatvaror<br />
-                                    Äkta Desi-produkter direkt<br />
-                                    levererade för den moderna epoken.
-                                </p>
-                            </div>
-
-                            <div className="mt-8 md:mt-0 md:absolute md:top-1/2 md:right-0 md:-translate-y-1/2 text-right">
-                                <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight opacity-90">
-                                    DESIGN SOM<br />
-                                    <span className="text-white">SMAKAR SOM HEMMA</span>
-                                </p>
+                    <div className="relative w-full max-w-7xl mx-auto">
+                        {/* Massive headline */}
+                        <div className="font-anton text-massive text-center uppercase pointer-events-none select-none">
+                            <div className="hidden md:block">NY MATVARUEPOK</div>
+                            <div className="md:hidden flex flex-col items-center leading-none">
+                                <span>NY</span><span>MATVARU</span><span>EPOK</span>
                             </div>
                         </div>
-                    </section>
 
-                    {/* Brand Strip */}
-                    <footer className="relative z-10 w-full px-8 pb-12 mt-auto">
-                        <div className="flex flex-wrap items-center justify-center md:justify-between gap-8 opacity-40 grayscale pointer-events-none">
-                            <span className="font-bold tracking-[0.3em] text-sm uppercase">GUCCI</span>
-                            <span className="font-bold tracking-[0.3em] text-sm uppercase">ZARA</span>
-                            <span className="font-bold tracking-[0.3em] text-sm uppercase">VOGUE</span>
-                            <span className="font-bold tracking-[0.3em] text-sm uppercase">SONY</span>
-                            <span className="font-bold tracking-[0.3em] text-sm uppercase">ZALORA</span>
+                        {/* Masked product image */}
+                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                            <div className="w-[240px] h-[320px] md:w-[420px] md:h-[540px]">
+                                <img
+                                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
+                                    alt="Matvaror"
+                                    className="w-full h-full object-cover brush-shape shadow-2xl"
+                                    style={{ filter: 'grayscale(30%) contrast(1.15) brightness(1.1)' }}
+                                />
+                            </div>
                         </div>
-                    </footer>
+
+                        {/* Floating info */}
+                        <div className="mt-60 md:mt-0 md:absolute md:bottom-[-90px] md:left-0 text-left max-w-xs">
+                            <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-loose opacity-90">
+                        // Premium Grossistmatvaror<br />
+                                Äkta Desi-produkter direkt<br />
+                                levererade för den moderna epoken.
+                            </p>
+                        </div>
+                        <div className="mt-6 md:mt-0 md:absolute md:top-1/2 md:right-0 md:-translate-y-1/2 text-right">
+                            <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight opacity-90">
+                                DESIGN SOM<br />
+                                <span>SMAKAR SOM HEMMA</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Scroll arrow */}
+                    <a href="#produkter" className="mt-16 md:mt-32 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity animate-bounce">
+                        <span className="text-[9px] font-black tracking-[0.3em]">UTFORSKA</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </a>
+                </section>
+            );
+        }
+
+        function ProductCard({ product, onAdd }) {
+            const [added, setAdded] = useState(false);
+            const handleAdd = () => {
+                onAdd(product);
+                setAdded(true);
+                setTimeout(() => setAdded(false), 1500);
+            };
+            return (
+                <div className="product-card rounded-2xl p-5 flex flex-col gap-4" style={{ background: 'rgba(0,0,0,0.18)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                    <div className="relative">
+                        <div className="w-full aspect-square rounded-xl flex items-center justify-center text-7xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                            {product.emoji}
+                        </div>
+                        <span className="absolute top-2 right-2 text-[10px] font-black tracking-wide px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.9)', color: '#fd2601' }}>
+                            {product.discount}
+                        </span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black tracking-[0.2em] uppercase opacity-70 mb-1">{product.brand}</p>
+                        <h3 className="font-bold text-base leading-tight mb-1">{product.name}</h3>
+                        <p className="text-[11px] opacity-60">{product.weight}</p>
+                    </div>
+                    <div className="flex items-end justify-between mt-auto">
+                        <div>
+                            <p className="text-2xl font-black leading-none">{product.price}:-</p>
+                            <p className="text-[10px] opacity-60 mt-0.5">{product.unitPrice}</p>
+                        </div>
+                        <button
+                            onClick={handleAdd}
+                            className="text-[11px] font-black tracking-wide uppercase px-4 py-2 rounded-full border-2 border-white transition-all duration-300"
+                            style={added ? { background: 'white', color: '#fd2601' } : {}}
+                        >
+                            {added ? '✓ Tillagd' : 'Lägg i korg'}
+                        </button>
+                    </div>
                 </div>
             );
-        };
+        }
+
+        function Products({ onAdd }) {
+            const [activeCategory, setActiveCategory] = useState('Alla');
+            const filtered = activeCategory === 'Alla' ? products : products.filter(p => p.category === activeCategory);
+
+            return (
+                <section id="produkter" className="relative z-10 px-6 md:px-10 py-24">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Section header */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                            <div>
+                                <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-70 mb-3">// Storsäljare</p>
+                                <h2 className="font-anton text-5xl md:text-7xl uppercase leading-none">POPULÄRT<br />JUST NU</h2>
+                            </div>
+                            {/* Category Filter */}
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setActiveCategory(cat)}
+                                        className="text-[11px] font-black tracking-widest uppercase px-4 py-2 rounded-full border-2 border-white transition-all duration-300"
+                                        style={activeCategory === cat ? { background: 'white', color: '#fd2601' } : { background: 'transparent' }}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {filtered.map(p => <ProductCard key={p.id} product={p} onAdd={onAdd} />)}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function WholesaleCTA() {
+            return (
+                <section id="grossist" className="relative z-10 px-6 md:px-10 py-24">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="rounded-3xl p-10 md:p-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-10"
+                            style={{ background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-70 mb-4">// Grossistprogram</p>
+                                <h2 className="font-anton text-5xl md:text-7xl uppercase leading-none mb-6">
+                                    SPARA MER.<br />KÖP BULK.
+                                </h2>
+                                <ul className="space-y-3 mb-8">
+                                    {[
+                                        'Skattefaktura inkluderad',
+                                        'Gratis leverans i Stockholm över 2 000 kr',
+                                        'Dedikerad kontoansvarig',
+                                        'Prioriterad lagerhantering',
+                                        'Exklusiva volymrabatter upp till 45%',
+                                    ].map(item => (
+                                        <li key={item} className="flex items-center gap-3 text-sm opacity-90">
+                                            <span className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black flex-shrink-0">✓</span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button className="px-8 py-4 font-black text-sm tracking-widest uppercase rounded-full border-2 border-white hover:bg-white hover:text-brand transition-all duration-300">
+                                    Ansök om Grossistkonto →
+                                </button>
+                            </div>
+                            <div className="flex-1 grid grid-cols-2 gap-4">
+                                {[
+                                    { label: 'Sparar du upp till', value: '45%' },
+                                    { label: 'Leveranstid', value: '24h' },
+                                    { label: 'Produkter i lager', value: '200+' },
+                                    { label: 'Aktiva grossister', value: '1 400+' },
+                                ].map(s => (
+                                    <div key={s.label} className="rounded-2xl p-6 text-center" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                                        <p className="font-anton text-4xl md:text-5xl leading-none mb-2">{s.value}</p>
+                                        <p className="text-[10px] font-bold tracking-widest uppercase opacity-70">{s.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function About() {
+            return (
+                <section id="om-oss" className="relative z-10 px-6 md:px-10 py-24">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid md:grid-cols-2 gap-16 items-center">
+                            <div>
+                                <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-70 mb-4">// Om Oss</p>
+                                <h2 className="font-anton text-5xl md:text-7xl uppercase leading-none mb-8">
+                                    ÄKTA SMAK.<br />SMART PRIS.
+                                </h2>
+                                <p className="text-sm opacity-80 leading-loose mb-6">
+                                    Exotikmat är en del av Desibox-ekosystemet — din pålitliga partner för autentiska
+                                    Desi-matvaror i Sverige. Vi levererar direkt från producenter till din butik,
+                                    ditt restaurangkök eller din dörr, dygnet runt.
+                                </p>
+                                <p className="text-sm opacity-80 leading-loose mb-8">
+                                    Med mer än 200 produkter i lager och leverans inom 24 timmar hjälper vi dig att
+                                    hålla hyllorna fyllda och kunderna nöjda — utan att kompromissa med kvaliteten.
+                                </p>
+                                <div className="flex gap-8">
+                                    {[{ v: '2021', l: 'Grundat' }, { v: '🇸🇪', l: 'Stockholm' }, { v: '4.9★', l: 'Kundbetyg' }].map(s => (
+                                        <div key={s.l}>
+                                            <p className="font-anton text-3xl leading-none">{s.v}</p>
+                                            <p className="text-[10px] tracking-widest uppercase opacity-60 mt-1">{s.l}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* Trust logos grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {[
+                                    { icon: '🏪', title: 'Direktleverans', desc: 'Från producent till dig utan mellanhänder' },
+                                    { icon: '🧾', title: 'Skattefaktura', desc: 'Korrekt dokumentation för din verksamhet' },
+                                    { icon: '🌍', title: 'Hållbar källa', desc: 'Etiskt framtagna råvaror från Sydasien' },
+                                    { icon: '❄️', title: 'Temperaturkontroll', desc: 'Säker förvaring under hela transportkedjan' },
+                                ].map(f => (
+                                    <div key={f.title} className="rounded-2xl p-6" style={{ background: 'rgba(0,0,0,0.18)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                                        <div className="text-3xl mb-3">{f.icon}</div>
+                                        <h4 className="font-bold text-sm mb-1">{f.title}</h4>
+                                        <p className="text-[11px] opacity-60 leading-relaxed">{f.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function CartDrawer({ cart, isOpen, onClose, onRemove }) {
+            const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            return (
+                <>
+                    {/* Overlay */}
+                    {isOpen && <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={onClose} />}
+                    {/* Drawer */}
+                    <div className={`cart-drawer fixed top-0 right-0 h-full w-full max-w-sm z-50 flex flex-col ${isOpen ? 'open' : ''}`}
+                        style={{ background: 'rgba(20,7,4,0.97)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                            <h2 className="font-anton text-2xl uppercase">Varukorg ({cart.reduce((s, i) => s + i.qty, 0)})</h2>
+                            <button onClick={onClose} className="w-9 h-9 border border-white/30 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">✕</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {cart.length === 0 ? (
+                                <div className="text-center opacity-40 mt-20">
+                                    <div className="text-5xl mb-4">🛒</div>
+                                    <p className="text-sm">Din varukorg är tom</p>
+                                </div>
+                            ) : cart.map(item => (
+                                <div key={item.id} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                                    <span className="text-3xl">{item.emoji}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-sm truncate">{item.name}</p>
+                                        <p className="text-[11px] opacity-60">{item.qty} × {item.price} kr</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-black text-base">{item.price * item.qty} kr</p>
+                                        <button onClick={() => onRemove(item.id)} className="text-[10px] opacity-40 hover:opacity-100 transition-opacity">Ta bort</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {cart.length > 0 && (
+                            <div className="p-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                                <div className="flex justify-between items-center mb-6">
+                                    <span className="font-bold text-sm uppercase tracking-widest opacity-70">Totalt</span>
+                                    <span className="font-anton text-3xl">{total} kr</span>
+                                </div>
+                                <button className="w-full py-4 font-black text-sm tracking-widest uppercase rounded-full bg-white text-brand hover:bg-brand hover:text-white border-2 border-white transition-all duration-300">
+                                    Gå till kassan →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        function Footer() {
+            return (
+                <footer className="relative z-10 border-t px-6 md:px-10 py-16" style={{ borderColor: 'rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.15)' }}>
+                    <div className="max-w-7xl mx-auto">
+                        {/* Brand partners */}
+                        <div className="flex flex-wrap items-center justify-center md:justify-between gap-8 mb-16 opacity-35">
+                            {['GUCCI', 'ICA', 'VOGUE', 'SONY', 'ZALORA', 'IKEA'].map(b => (
+                                <span key={b} className="font-black text-sm md:text-base tracking-[0.3em] uppercase">{b}</span>
+                            ))}
+                        </div>
+                        {/* Footer grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+                            <div className="md:col-span-2">
+                                <p className="font-anton text-3xl mb-4 tracking-wider">✱ EXOTIKMAT</p>
+                                <p className="text-sm opacity-60 leading-loose max-w-xs">
+                                    Premium grossistpartner för äkta Desi-matvaror i Sverige. En del av Desibox-ekosystemet.
+                                </p>
+                                <div className="flex gap-3 mt-6">
+                                    {['📧', '📞', '📍'].map((icon, i) => (
+                                        <div key={i} className="w-9 h-9 border border-white/20 rounded-full flex items-center justify-center text-sm hover:border-white/60 transition-colors cursor-pointer">{icon}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="font-black text-[11px] tracking-[0.2em] uppercase mb-5 opacity-60">Kategorier</h4>
+                                <ul className="space-y-3">
+                                    {['Bulk-Ris', 'Grossistkryddor', 'Linser & Baljväxter', 'Färdigrätter', 'Oljor'].map(l => (
+                                        <li key={l}><a href="#" className="text-sm opacity-70 hover:opacity-100 hover-line transition-opacity">{l}</a></li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-black text-[11px] tracking-[0.2em] uppercase mb-5 opacity-60">Support</h4>
+                                <ul className="space-y-3">
+                                    {['Vanliga frågor', 'Villkor & Bestämmelser', 'Integritetspolicy', 'Leveransinformation', 'Kontakta oss'].map(l => (
+                                        <li key={l}><a href="#" className="text-sm opacity-70 hover:opacity-100 hover-line transition-opacity">{l}</a></li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            <p className="text-[11px] opacity-40 tracking-widest uppercase">© 2026 EXOTIKMAT. Alla rättigheter förbehållna.</p>
+                            <div className="flex gap-3">
+                                {['+46 735 173 132', 'info@desibox.io'].map(c => (
+                                    <span key={c} className="text-[11px] opacity-40">{c}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        /* ── APP ── */
+        function App() {
+            const [scrolled, setScrolled] = useState(false);
+            const [cart, setCart] = useState([]);
+            const [cartOpen, setCartOpen] = useState(false);
+
+            useEffect(() => {
+                const onScroll = () => setScrolled(window.scrollY > 60);
+                window.addEventListener('scroll', onScroll);
+                return () => window.removeEventListener('scroll', onScroll);
+            }, []);
+
+            const addToCart = (product) => {
+                setCart(prev => {
+                    const existing = prev.find(i => i.id === product.id);
+                    if (existing) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+                    return [...prev, { ...product, qty: 1 }];
+                });
+            };
+
+            const removeFromCart = (id) => setCart(prev => prev.filter(i => i.id !== id));
+
+            return (
+                <div className="relative">
+                    <Navbar cartCount={cart.reduce((s, i) => s + i.qty, 0)} onCartOpen={() => setCartOpen(true)} scrolled={scrolled} />
+                    <Hero />
+                    <Products onAdd={addToCart} />
+                    <WholesaleCTA />
+                    <About />
+                    <Footer />
+                    <CartDrawer cart={cart} isOpen={cartOpen} onClose={() => setCartOpen(false)} onRemove={removeFromCart} />
+                </div>
+            );
+        }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
