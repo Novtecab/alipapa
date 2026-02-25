@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+    --color-brand: #fd2601;
+    --color-brand-light: #f37e1c;
+    --font-anton: "Anton", sans-serif;
+    --font-inter: "Inter", sans-serif;
+}
+
+@layer base {
+    ::selection {
+        background-color: white;
+        color: #fd2601;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(160deg, #fd2601 0%, #f37e1c 60%, #e8a020 100%);
+        color: white;
+        min-height: 100vh;
+        @apply overflow-x-hidden;
+    }
+}
+
+@layer components {
+    .text-massive {
+        font-size: clamp(2.5rem, 12vw, 180px);
+        line-height: 0.88;
+        letter-spacing: 0.04em;
+    }
+
+    .brush-shape {
+        clip-path: ellipse(46% 50% at 50% 50%);
+        border-radius: 38% 62% 55% 45%/48% 42% 58% 52%;
+    }
+
+    .cart-drawer {
+        @apply fixed top-0 right-0 h-full w-full max-w-sm z-50 flex flex-col translate-x-full transition-transform duration-400 ease-in-out;
+    }
+
+    .cart-drawer.open {
+        @apply translate-x-0;
+    }
+
+    .hover-line {
+        @apply relative after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 hover:after:w-full;
+    }
+
+    .product-card {
+        @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl;
+    }
+
+    .card-img {
+        @apply transition-transform duration-400 ease-in-out;
+    }
+
+    .product-card:hover .card-img {
+        @apply scale-105;
+    }
+
+    /* Checkout specific styles */
+    .radio-card {
+        @apply cursor-pointer rounded-2xl border-2 border-white/20 transition-all duration-200 p-4 flex items-start gap-3.5 bg-white/5 hover:bg-white/10 hover:border-white/40;
+    }
+
+    .radio-card.selected {
+        @apply border-white bg-white/20 -translate-y-0.5 shadow-lg;
+    }
+
+    .zone-pill {
+        @apply inline-block rounded-full text-[10px] font-black tracking-widest uppercase px-3 py-1 border border-white/50 bg-white/10;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #fd2601;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+}
