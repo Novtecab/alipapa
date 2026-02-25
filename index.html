@@ -1,122 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exotikmat | Wholesale Desi Staples & Bulk Bargains</title>
-    <meta name="description" content="Premium wholesale grocery and authentic desi meals. Bulk buy rice, spices, and lentils at best prices.">
-    <!-- Google Fonts -->
+    <title>EXOTIKMAT | Den Nya Matvaruepoken</title>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-orange': '#fd2601',
+                        'brand-light': '#f37e1c',
+                        'blob-orange': '#F4791B',
+                    },
+                    fontFamily: {
+                        anton: ['Anton', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    opacity: {
+                        '8': '0.08',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        ::selection {
+            background-color: white;
+            color: #fd2601;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #fd2601, #f37e1c);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .mask-brush {
+            -webkit-mask-image: url('https://raw.githubusercontent.com/Novtecab/alipapa/main/mask.png');
+            /* Fallback pattern if remote not available */
+            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><path d="M50,250 Q100,50 250,50 T450,250 T250,450 T50,250" fill="black"/></svg>');
+            /* Basic shape mask */
+            mask-size: cover;
+            -webkit-mask-size: cover;
+            mask-repeat: no-repeat;
+            -webkit-mask-repeat: no-repeat;
+        }
+
+        /* High-end Brush Stroke Mask Approximation with CSS Shapes if image fails */
+        .brush-shape {
+            clip-path: polygon(10% 0%, 90% 5%, 100% 50%, 90% 95%, 10% 100%, 0% 50%);
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+        }
+
+        .text-massive {
+            font-size: clamp(3rem, 12vw, 180px);
+            line-height: 0.9;
+            letter-spacing: 0.05em;
+        }
+
+        .tracking-widest-plus {
+            letter-spacing: 0.2em;
+        }
+    </style>
 </head>
+
 <body>
+    <div id="root"></div>
 
-    <header id="header">
-        <div class="container">
-            <nav>
-                <a href="#" class="logo">Exotikmat</a>
-                <ul class="nav-links">
-                    <li><a href="#products">Products</a></li>
-                    <li><a href="#wholesale">Wholesale <span class="wholesale-badge">SAVE 40%</span></a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-                <div class="nav-actions">
-                    <button class="btn btn-add">Login</button>
-                </div>
-            </nav>
-        </div>
-    </header>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    <main>
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="container">
-                <div class="hero-content animate-fade-in">
-                    <span class="hero-tagline">Premium Wholesale Grocery</span>
-                    <h1>Bulk Savings on Authentic Desi Staples</h1>
-                    <p>Stock up your business or pantry with the finest selection of Spices, Rice, and Lentils directly sourced for maximum freshness.</p>
-                    <div class="hero-btns">
-                        <a href="#products" class="btn btn-primary">Shop Bulk Packs</a>
-                        <a href="#wholesale" class="btn" style="color: var(--text-main); margin-left:1rem; border: 1px solid var(--glass-border);">Wholesale Inquiry</a>
+        const App = () => {
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <div className="relative min-h-screen">
+                    {/* Ambient Background Elements */}
+                    <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden">
+                        <h1 className="text-[25vw] font-anton opacity-8 blur-[4px] select-none text-white pointer-events-none">
+                            EXOTIKMAT
+                        </h1>
+
+                        {/* Glowing Blobs */}
+                        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-blob-orange rounded-full blur-[80px] mix-blend-screen opacity-60 translate-x-1/2 translate-y-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-[600px] h-[300px] bg-blob-orange rounded-full blur-[80px] mix-blend-screen opacity-60 -translate-x-1/4 translate-y-1/2"></div>
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Product Grid -->
-        <section id="products" class="section">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Popular Bulk Packs</h2>
-                    <p>High-demand staples for restaurants and households.</p>
-                </div>
-                <div class="product-grid" id="productGrid">
-                    <!-- Products will be injected by JS -->
-                </div>
-            </div>
-        </section>
+                    {/* Navigation */}
+                    <nav className={`fixed top-0 w-full z-50 flex items-center justify-between px-8 py-6 transition-all duration-300 ${scrolled ? 'bg-black/10 backdrop-blur-md' : 'bg-transparent'}`}>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-black tracking-widest uppercase font-inter leading-none">✱ EXOTIKMAT</span>
+                        </div>
 
-        <!-- Wholesale Call to Action -->
-        <section id="wholesale" class="section">
-            <div class="container">
-                <div class="wholesale-banner glass animate-fade-in">
-                    <div class="banner-text">
-                        <h2>Business Wholesale Program</h2>
-                        <p>Are you a restaurant or retail shop owner? Get exclusive tier pricing and priority delivery on orders over 500kg.</p>
-                        <ul style="margin: 1.5rem 0; color: var(--text-muted); list-style: none;">
-                            <li>✓ Tax credit invoices</li>
-                            <li>✓ Free delivery in Stockholm</li>
-                            <li>✓ Dedicated account manager</li>
-                        </ul>
-                        <button class="btn btn-primary">Apply for Wholesale Account</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+                        <div className="hidden md:flex gap-12 font-inter text-[10px] font-black tracking-[0.2em] uppercase">
+                            <a href="#" className="hover:opacity-60 transition-opacity">Kryddor</a>
+                            <a href="#" className="hover:opacity-60 transition-opacity">Ris</a>
+                            <a href="#" className="hover:opacity-60 transition-opacity">Linser</a>
+                            <a href="#" className="hover:opacity-60 transition-opacity">Grossist</a>
+                        </div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <div class="logo footer-logo">Exotikmat</div>
-                    <p style="color: var(--text-muted); font-size: 0.875rem;">Premium wholesale partner for authentic Desi groceries. Part of the Desibox ecosystem.</p>
-                </div>
-                <div class="footer-col">
-                    <h4>Categories</h4>
-                    <ul>
-                        <li><a href="#">Bulk Rice</a></li>
-                        <li><a href="#">Wholesale Spices</a></li>
-                        <li><a href="#">Lentils & Pulses</a></li>
-                        <li><a href="#">Ready Meals</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Terms & Conditions</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Shipping Info</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Contact</h4>
-                    <ul style="color: var(--text-muted); font-size: 0.875rem;">
-                        <li>+46 735 173 132</li>
-                        <li>info@desibox.io</li>
-                        <li>Stockholm, Sweden</li>
-                    </ul>
-                </div>
-            </div>
-            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-muted); font-size: 0.75rem;">
-                Copyright © 2026 EXOTIKMAT. All Rights Reserved.
-            </div>
-        </div>
-    </footer>
+                        <div className="flex items-center gap-4 group cursor-pointer">
+                            <span className="text-[10px] font-black tracking-widest uppercase">BESTÄLL NU</span>
+                            <div className="w-10 h-10 border-2 border-white rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-brand-orange transition-all duration-300">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 19L19 5M19 5H10M19 5V14" />
+                                </svg>
+                            </div>
+                        </div>
+                    </nav>
 
-    <script src="app.js"></script>
+                    {/* Hero Section */}
+                    <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-20">
+                        <div className="relative w-full max-w-7xl">
+                            {/* Headline */}
+                            <div className="font-anton text-massive text-center uppercase tracking-widest leading-none pointer-events-none">
+                                <div className="md:block hidden">NY MATVARUEPOK</div>
+                                <div className="md:hidden flex flex-col items-center">
+                                    <span>NY</span>
+                                    <span>MATVARU</span>
+                                    <span>EPOK</span>
+                                </div>
+                            </div>
+
+                            {/* Masked Image Overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                                <div className="w-[300px] h-[400px] md:w-[500px] md:h-[600px] relative pointer-events-none">
+                                    <img
+                                        src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
+                                        alt="Matvaror"
+                                        className="w-full h-full object-cover brush-shape pointer-events-none grayscale contrast-125 brightness-110 shadow-2xl"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Floating Info Elements */}
+                            <div className="mt-12 md:mt-0 md:absolute md:bottom-[-100px] md:left-0 text-left max-w-sm">
+                                <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-relaxed opacity-90">
+                                    // Premium Grossistmatvaror<br />
+                                    Äkta Desi-produkter direkt<br />
+                                    levererade för den moderna epoken.
+                                </p>
+                            </div>
+
+                            <div className="mt-8 md:mt-0 md:absolute md:top-1/2 md:right-0 md:-translate-y-1/2 text-right">
+                                <p className="text-[10px] font-bold tracking-[0.2em] uppercase leading-tight opacity-90">
+                                    DESIGN SOM<br />
+                                    <span className="text-white">SMAKAR SOM HEMMA</span>
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Brand Strip */}
+                    <footer className="relative z-10 w-full px-8 pb-12 mt-auto">
+                        <div className="flex flex-wrap items-center justify-center md:justify-between gap-8 opacity-40 grayscale pointer-events-none">
+                            <span className="font-bold tracking-[0.3em] text-sm uppercase">GUCCI</span>
+                            <span className="font-bold tracking-[0.3em] text-sm uppercase">ZARA</span>
+                            <span className="font-bold tracking-[0.3em] text-sm uppercase">VOGUE</span>
+                            <span className="font-bold tracking-[0.3em] text-sm uppercase">SONY</span>
+                            <span className="font-bold tracking-[0.3em] text-sm uppercase">ZALORA</span>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
+
 </html>
